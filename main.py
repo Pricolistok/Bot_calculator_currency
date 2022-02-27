@@ -83,7 +83,7 @@ def f_cena_prod_bank(message):
         bot.register_next_step_handler(message, f_cena_prod_bir)
     else:
         bot.send_message(message.from_user.id, 'Введите корректно')
-        bot.register_next_step_handler(message, get_info_cena_bir)
+        bot.register_next_step_handler(message, f_cena_prod_bank)
 
 def f_cena_prod_bir(message):
     global cena_prod_bir
@@ -123,7 +123,7 @@ def f_cena_prod_bir(message):
 
     else:
         bot.send_message(message.from_user.id, 'Введите корректно')
-        bot.register_next_step_handler(message, get_info_cena_banka)
+        bot.register_next_step_handler(message, f_cena_prod_bir)
 def main():
     while True:
         try:
