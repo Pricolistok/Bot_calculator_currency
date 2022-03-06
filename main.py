@@ -1,7 +1,7 @@
 import telebot
 from telebot import types
 
-bot = telebot.TeleBot('5135451773:AAFj-8ZUeEa58t-jDVEBkOoZ8-pAox1r2U8')
+bot = telebot.TeleBot('2144928257:AAG9jHTBQoUlPS5KDydyEny9RO_PTpZ6hIQ')
 
 skolko_kup = 0
 kurs_bir = 0
@@ -9,6 +9,10 @@ kurs_bank = 0
 skolko_prod = 0
 cena_prod_bank = 0
 cena_prod_bir = 0
+skolko_kup_tinkoff = 0
+kurs_bir_tin = 0
+skolko_prod_tin = 0
+cena_prod_bir_tin = 0
 def isfloat(value):
     try:
         float(value)
@@ -19,11 +23,101 @@ def isfloat(value):
 
 @bot.message_handler(content_types=['text'])
 def start(message):
-    if message.text == '/reg':
-        bot.send_message(message.from_user.id, "Сколько куплено?")
-        bot.register_next_step_handler(message, get_info_skolko_kup) #следующий шаг – функция get_name
+    startbtn = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    st = types.KeyboardButton("/start")
+    startbtn.add(st)
+    bot.send_message(message.chat.id, '↓', reply_markup=startbtn)
+    if message.text == '/start':
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        Tinkoff = types.KeyboardButton("Tinkoff")
+        VTB = types.KeyboardButton("VTB")
+        markup.add(Tinkoff, VTB)
+        bot.send_message(message.chat.id, 'Какой банк?', reply_markup=markup)
+        bot.register_next_step_handler(message, what_a_bank)
     else:
-        bot.send_message(message.from_user.id, 'Напиши /reg')
+        bot.send_message(message.from_user.id, 'Нажми кнопку /start')
+def what_a_bank(message):
+    if message.text == 'VTB':
+        print('VTB')
+        bot.send_message(message.from_user.id, "Сколько куплено?", reply_markup = types.ReplyKeyboardRemove())
+        bot.register_next_step_handler(message, get_info_skolko_kup)
+    elif message.text == 'Tinkoff':
+        print('Tinkoff')
+        bot.send_message(message.from_user.id, "Сколько куплено?", reply_markup = types.ReplyKeyboardRemove())
+        bot.register_next_step_handler(message, get_info_skolko_kup_tinkoff)
+    else:
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        Tinkoff = types.KeyboardButton("Tinkoff")
+        VTB = types.KeyboardButton("VTB")
+        markup.add(Tinkoff, VTB)
+        bot.send_message(message.chat.id, 'Введите корректно', reply_markup=markup)
+        bot.register_next_step_handler(message, what_a_bank)
+def get_info_skolko_kup_tinkoff(message):
+    global skolko_kup_tinkoff
+    skolko_kup_tinkoff = message.text
+    if skolko_kup_tinkoff.isdigit():
+        skolko_kup_tinkoff = int(skolko_kup_tinkoff)
+        print(skolko_kup_tinkoff)
+        bot.send_message(message.from_user.id, 'Введите цену биржи')
+        bot.register_next_step_handler(message, get_info_cena_banka_tinkoff)
+    else:
+        bot.send_message(message.from_user.id, 'Введите корректно')
+        bot.register_next_step_handler(message, get_info_skolko_kup_tinkoff)
+
+def get_info_cena_banka_tinkoff(message):
+    global kurs_bir_tin
+    kurs_bir_tin = message.text
+    if isfloat(kurs_bir_tin):
+        kurs_bir_tin = float(kurs_bir_tin)
+        print(kurs_bir_tin)
+        bot.send_message(message.from_user.id, 'Сколько продано')
+        bot.register_next_step_handler(message, get_info_skolko_prod_tin)
+    else:
+        bot.send_message(message.from_user.id, 'Введите корректно')
+        bot.register_next_step_handler(message, get_info_cena_banka_tinkoff)
+
+def get_info_skolko_prod_tin(message):
+    global skolko_prod_tin
+    skolko_prod_tin = message.text
+    if skolko_prod_tin.isdigit():
+        skolko_prod_tin = int(skolko_prod_tin)
+        print(skolko_prod_tin)
+        bot.send_message(message.from_user.id, 'Введите цену продажи биржи')
+        bot.register_next_step_handler(message, f_cena_prod_bir_tin)
+    else:
+        bot.send_message(message.from_user.id, 'Введите корректно')
+        bot.register_next_step_handler(message, get_info_skolko_prod_tin)
+
+def f_cena_prod_bir_tin(message):
+    global cena_prod_bir_tin
+    cena_prod_bir_tin = message.text
+    if isfloat(cena_prod_bir_tin):
+        cena_prod_bir_tin = float(cena_prod_bir_tin)
+        print(cena_prod_bir_tin)
+        bot.send_message(message.from_user.id, 'ОК')
+        bot.send_message(message.from_user.id, f'Сколько куплено: {skolko_kup_tinkoff}')
+        bot.send_message(message.from_user.id, f'Итог покупки без комиссий: {round(skolko_kup_tinkoff * kurs_bir_tin, 4)}')
+        print(skolko_kup_tinkoff * kurs_bir_tin)
+        bot.send_message(message.from_user.id, f'Комиссия биржи: {round(skolko_kup_tinkoff * kurs_bir_tin * 0.04/100, 4)}')
+        print('-------------------')
+        print(skolko_kup_tinkoff)
+        print(kurs_bir_tin)
+        print('-----------')
+        print(skolko_kup_tinkoff * kurs_bir_tin * 0.04//100)
+        bot.send_message(message.from_user.id, f'Итоговая покупка: {round(skolko_kup_tinkoff * kurs_bir_tin * 0.04/100 + (skolko_kup_tinkoff * kurs_bir_tin), 4)}')
+        bot.send_message(message.from_user.id, '------------------------------------------------------')
+        bot.send_message(message.from_user.id, f'Сколько продано: {skolko_prod_tin}')
+        bot.send_message(message.from_user.id, f'Итог продажи без комиссии: {round(skolko_prod_tin * cena_prod_bir_tin, 4)}')
+        bot.send_message(message.from_user.id, f'Коммисия биржи при продаже: {round(skolko_prod_tin * cena_prod_bir_tin * 0.04/100, 4)}')
+        bot.send_message(message.from_user.id, f'Итоговая цена при продаже с комиссией: {round(skolko_prod_tin * cena_prod_bir_tin - skolko_prod_tin * cena_prod_bir_tin * 0.04/100, 4)}')
+        bot.send_message(message.from_user.id, '__________________________________________')
+        bot.send_message(message.from_user.id, f'Выигрышь: {round((skolko_prod_tin * cena_prod_bir_tin) - (skolko_prod_tin * cena_prod_bir_tin * 0.04/100) - (skolko_prod_tin * kurs_bir_tin * 0.04/100) - (skolko_prod_tin * kurs_bir_tin), 4)}')
+        print('KO',(skolko_prod_tin * cena_prod_bir_tin))
+        print('KO', (skolko_prod_tin * kurs_bir_tin))
+        print('KO', (skolko_prod_tin * cena_prod_bir_tin * 0.04//100) + (skolko_prod_tin * kurs_bir_tin * 0.04//100))
+    else:
+        bot.send_message(message.from_user.id, 'Введите корректно')
+        bot.register_next_step_handler(message, f_cena_prod_bir)
 
 def get_info_skolko_kup(message):
     global skolko_kup
@@ -114,10 +208,10 @@ def f_cena_prod_bir(message):
         bot.send_message(message.from_user.id, f'Итоговая покупка: {round(kom_bir + kom_brok + itog_sum_pokup_bez_kom, 4)}')
         bot.send_message(message.from_user.id, '------------------------------------------------------')
         bot.send_message(message.from_user.id, f'Сколько продано: {skolko_prod}')
-        bot.send_message(message.from_user.id, f'Итог покупки без комиссии: {round(cena_prod_bank * skolko_prod, 4)}')
+        bot.send_message(message.from_user.id, f'Итог продажи без комиссии: {round(cena_prod_bank * skolko_prod, 4)}')
         bot.send_message(message.from_user.id, f'Коммисия брокера при продаже: {round(kom_prod_brok, 4)}')
         bot.send_message(message.from_user.id, f'Коммисия биржи при продаже: {round(kom_prod_bir, 4)}')
-        bot.send_message(message.from_user.id, f'Итоговая цена при продаже с комиссией: {round((skolko_prod*cena_prod_bank)-(kom_prod_brok + kom_prod_bir) , 4)}')
+        bot.send_message(message.from_user.id, f'Итоговая цена при продаже с комиссией: {round((skolko_prod*cena_prod_bank)-(skolko_prod_tin*cena_prod_bir_tin*0.04/100) , 4)}')
         bot.send_message(message.from_user.id, '__________________________________________')
         bot.send_message(message.from_user.id, f'Выигрышь: {round(((skolko_prod*cena_prod_bank)-(kom_prod_brok + kom_prod_bir))-(skolko_prod*kurs_bank * 0.0015 / 100 + skolko_prod*kurs_bank * 0.04 / 100 + skolko_prod*kurs_bank), 4)}')
 
